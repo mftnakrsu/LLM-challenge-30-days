@@ -227,11 +227,142 @@ Coreference resolution helps models identify when different words refer to the s
 The model should recognize that "He" refers to "John."
 
 
-
-
-
-
 # DAY 3
+
+### **Relevance Scoring and Combining Information in Self-Attention**
+
+In self-attention mechanisms, **relevance scoring** determines how much focus a token should give to other tokens in a sequence. This is achieved using the **Scaled Dot-Product Attention** formula:
+
+```
+Attention(Q, K, V) = softmax((Q * K^T) / sqrt(d_k)) * V
+```
+
+where:
+- **Q (Query):** The token looking for relevant information.
+- **K (Key):** Other tokens being compared.
+- **V (Value):** The actual information retrieved.
+- **d_k:** A scaling factor.
+
+#### **Step 1: Relevance Scoring**
+Each token computes its relevance to all other tokens using **dot-product similarity** between Q and K. Higher dot-product values indicate stronger relationships. The softmax function normalizes these scores.
+
+##### **Example**
+Consider the sentence:
+
+```
+The cat sat on the mat because it was tired.
+```
+
+To resolve **"it"**, the model needs to decide whether it refers to **"the cat"** or **"the mat"**. Using relevance scoring, the self-attention mechanism assigns **higher weights** to **"the cat"** based on context.
+
+#### **Step 2: Combining Information**
+Once scores are computed, they are used to weight the corresponding **V** values. The output is a weighted sum of all tokens.
+
+##### **Python Example**
+```python
+import numpy as np
+
+Q = np.array([[1, 0.5]])  # Query token
+K = np.array([[1, 0.5], [0.3, 0.8]])  # Key tokens
+V = np.array([[0.2, 0.7], [0.6, 0.1]])  # Value tokens
+
+# Compute dot-product similarity
+scores = np.dot(Q, K.T)
+
+# Apply softmax to get attention weights
+attention_weights = np.exp(scores) / np.sum(np.exp(scores), axis=1, keepdims=True)
+
+# Compute final output
+output = np.dot(attention_weights, V)
+
+print("Relevance Scores:\n", scores)
+print("Attention Weights:\n", attention_weights)
+print("Final Combined Representation:\n", output)
+```
+
+#### **Metaphor**
+Imagine you are in a meeting, and multiple people are speaking. Your brain **scores** each speaker based on relevance—your boss’s words may have more weight than casual comments. You then **combine** this information, prioritizing important insights while still considering others.
+
+This **dynamic weighting mechanism** is crucial for:
+- **Long-range dependencies** (capturing relationships between distant words).
+- **Coreference resolution** (linking pronouns to the correct entity).
+- **Contextual understanding** (refining meaning based on the full sentence).
+Here is a structured summary of the latest images focusing on key concepts relevant to Transformers and Large Language Models:
+
+---
+
+# **Advanced Attention Mechanisms in Transformers**
+
+## **1. Self-Attention Mechanism Breakdown**
+### **Query, Key, and Value Projections**
+- Each input token is transformed into three distinct vectors:
+  - **Query (Q):** Represents what the token is looking for in the sequence.
+  - **Key (K):** Represents the content of each token in the sequence.
+  - **Value (V):** Contains the actual information associated with each token.
+- These projections are performed using learned weight matrices.
+
+### **Computing Attention Scores**
+- The attention mechanism calculates **relevance scores** between the **query** of the current token and the **keys** of all other tokens.
+- The dot product between `Query` and `Key` matrices determines these scores.
+- A **softmax operation** normalizes the scores into probabilities.
+
+### **Weighted Sum of Values**
+- The computed attention scores are used to weight the **Value** matrix.
+- The output is an enriched representation of the token, integrating contextual information from relevant tokens in the sequence.
+
+---
+
+## **2. Multi-Head Self-Attention**
+- Instead of a single attention mechanism, multiple attention heads operate in parallel.
+- Each head captures different relationships in the data.
+- The outputs of all heads are combined into a single representation.
+- This enables the model to consider multiple perspectives at once.
+
+---
+
+## **3. Grouped Attention Mechanism**
+- Introduces `n_groups` and `n_attention_heads`, where attention heads are grouped to improve efficiency.
+- Each group processes a subset of keys and values, reducing computational cost.
+
+---
+
+## **4. Sparse Attention for Efficiency**
+- Standard Transformers apply **global autoregressive self-attention**, meaning each token attends to all previous tokens.
+- **Sparse Attention** reduces complexity by restricting attention to a limited number of past tokens.
+  - **Strided Sparse Attention:** Looks at every nth token.
+  - **Fixed Sparse Attention:** Attends to a fixed number of past tokens.
+
+---
+
+## **5. Token-Level Masking and Attention**
+- A token can only pay attention to previous tokens, ensuring autoregressive behavior.
+- Illustrated by an upper triangular matrix, where a token at position `t` can only attend to tokens `{1, 2, ..., t}`.
+
+---
+
+## **6. Ring Attention for Scaling Context Length**
+- Traditional attention mechanisms are limited by **GPU memory constraints**.
+- **Ring Attention** distributes queries, keys, and values across multiple GPUs to extend the effective context length.
+- This approach enables near **infinite context window** processing.
+
+---
+
+## **7. Transformer Model Architecture Insights**
+- Model configurations include:
+  - **Layers (Depth)**
+  - **Hidden Dimension**
+  - **Feed-Forward Network (FFN) Dimension**
+  - **Attention Heads**
+  - **Key/Value Heads**
+  - **Vocabulary Size**
+  - **Activation Function (e.g., SwiGLU)**
+  - **Position Encoding (e.g., RoPE - Rotary Position Embeddings)**
+
+---
+
+This summary covers **key attention optimizations**, **multi-head attention**, **sparse computation techniques**, and **scalability solutions** that improve Transformer efficiency. It provides an **intuitive understanding of attention mechanisms** while also linking to **GPU memory optimizations and large-scale context handling**.
+
+
 # DAY 4
 # DAY 5
 # DAY 6
