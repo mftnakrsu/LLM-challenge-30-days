@@ -235,8 +235,6 @@ The model should recognize that "He" refers to "John."
 
 <details> <summary>📖 <strong>Day 3: Relevance Scoring & Attention Mechanisms</strong></summary>
 
-# DAY 3
-
 ### **Relevance Scoring and Combining Information in Self-Attention**
 
 In self-attention mechanisms, **relevance scoring** determines how much focus a token should give to other tokens in a sequence. This is achieved using the **Scaled Dot-Product Attention** formula:
