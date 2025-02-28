@@ -364,6 +364,307 @@ This summary covers **key attention optimizations**, **multi-head attention**, *
 
 
 # DAY 4
+
+---
+## **Understanding the Transformer Architecture using Phi-3 Mini 4K Instruct**
+This lesson explores the **decoder-only transformer architecture** by using `microsoft/Phi-3-mini-4k-instruct`. The focus is on:
+- Loading a transformer model
+- Tokenizing and generating text
+- Understanding transformer block outputs
+- Analyzing the vocabulary and embedding sizes
+- Exploring how the model predicts tokens
+
+---
+
+## **1. Setup**
+We start by installing the necessary libraries, but in this case, they are pre-installed.
+
+```python
+# !pip install transformers>=4.41.2 accelerate>=0.31.0
+import warnings
+warnings.filterwarnings('ignore')
+```
+- `transformers`: For working with pre-trained transformer models.
+- `accelerate`: Optimizes execution, especially useful for large models.
+
+---
+
+## **2. Loading the Model and Tokenizer**
+The Phi-3 Mini model is a **causal language model (CLM)**, meaning it predicts the next token based on previous ones.
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+# Load model and tokenizer
+tokenizer = AutoTokenizer.from_pretrained("../models/microsoft/Phi-3-mini-4k-instruct")
+
+model = AutoModelForCausalLM.from_pretrained(
+    "../models/microsoft/Phi-3-mini-4k-instruct",
+    device_map="cpu",
+    torch_dtype="auto",
+    trust_remote_code=True,
+)
+```
+- `AutoModelForCausalLM`: Loads a decoder-only model.
+- `AutoTokenizer`: Processes text input into tokenized format.
+
+⚠️ **Warning:** The model may give a **flash-attention** warning, but since this setup does not use GPUs, it can be ignored.
+
+---
+
+## **3. Creating a Text Generation Pipeline**
+A pipeline abstracts model interaction, simplifying tokenization and inference.
+
+```python
+generator = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    return_full_text=False,  # Do not include the prompt in the output
+    max_new_tokens=50,  # Generate up to 50 new tokens
+    do_sample=False,  # Deterministic output (no randomness)
+)
+```
+
+### **Generating a Text Response**
+```python
+prompt = "Write an email apologizing to Sarah for the tragic gardening mishap. Explain how it happened."
+
+output = generator(prompt)
+print(output[0]['generated_text'])
+```
+
+- `do_sample=False`: Ensures deterministic output.
+- `max_new_tokens=50`: Limits response length.
+
+⏳ **Note:** Running on CPU, inference may take **~2 minutes**.
+
+---
+
+## **4. Exploring the Model’s Architecture**
+You can inspect the model's internal structure.
+
+```python
+print(model)
+```
+**Key Model Parameters:**
+- **Vocabulary Size:** 32,064 tokens
+- **Embedding Size:** 3,072-dimensional vectors
+- **Transformer Blocks (Layers):** 32
+
+To inspect embedding layers:
+
+```python
+model.model.embed_tokens
+```
+To print the transformer block stack:
+
+```python
+model.model
+```
+To access a specific transformer block:
+
+```python
+model.model.layers[0]
+```
+
+---
+
+## **5. Generating a Single Token**
+Each token in the text is generated one by one.
+
+```python
+prompt = "The capital of France is"
+input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+print(input_ids)
+```
+### **Extracting Transformer Outputs**
+The transformer block outputs a **3072-dimensional vector** for each token.
+
+```python
+model_output = model.model(input_ids)
+print(model_output[0].shape)  # Output shape: (batch_size, num_tokens, embedding_size)
+```
+- `batch_size = 1` (since we have one prompt)
+- `num_tokens = 5` (words in the prompt)
+- `embedding_size = 3072` (each token has a 3072-dimensional representation)
+
+### **Predicting the Next Token**
+We now extract logits from the **LM Head**.
+
+```python
+lm_head_output = model.lm_head(model_output[0])
+print(lm_head_output.shape)  # Output shape: (batch_size, num_tokens, vocab_size)
+```
+- Each token is mapped to a **32,064-dimensional probability distribution**.
+- The last token's prediction is extracted:
+
+```python
+token_id = lm_head_output[0, -1].argmax(-1)
+print(token_id)
+```
+
+Finally, **decoding the predicted token**:
+
+```python
+print(tokenizer.decode(token_id))
+```
+
+---
+
+## **6. Summary of Model Components**
+| Component               | Description |
+|------------------------|-------------|
+| **Query, Key, Value** | Used in self-attention to compute token relationships |
+| **Transformer Blocks** | Process input tokens iteratively |
+| **Embedding Layer** | Maps tokens to dense numerical representations |
+| **LM Head** | Predicts the next token from learned distributions |
+| **Autoregressive Attention** | Ensures each token only attends to previous tokens |
+
+---
+
+This summary provides a **concise overview of Phi-3 Mini’s architecture**, focusing on **self-attention, token prediction, and model structure**.
+
+### **Transformer Decoder Evolution (2017 vs. 2024)**
+
+#### **2017 Transformer Decoder (Original Transformer)**
+- **Positional Encoding:** Injects position information into token embeddings.
+- **Self-Attention:** Attends to all previous tokens to generate the next token.
+- **Add & Normalize:** Normalization layer to stabilize training.
+- **Feedforward Layer:** Processes information in a dense neural network.
+- **Second Add & Normalize:** Another normalization step before output.
+
+#### **2024 Transformer Decoder (Modern Enhancements)**
+- **RMSNorm Instead of LayerNorm:** Reduces computational complexity.
+- **Grouped Query Attention (GQA):** Improves efficiency by grouping queries.
+- **Rotary Embeddings (RoPE):** Enhances positional encoding for longer contexts.
+- **More Efficient Normalization & Attention Mechanisms:** Leads to better scaling.
+
+### **Efficient Training Data Packing Explained**
+#### **1. Inefficient Training Data Organization**
+- In a **naïve approach**, each document is stored in a batch separately.
+- If a document is shorter than the maximum allowed sequence length, **padding tokens** (empty spaces) are added to fill the remaining space.
+- **Problem:** This wastes valuable context space because a large part of the model’s attention is spent on padding instead of useful information.
+
+#### **2. Optimized Training Data Packing**
+- Instead of keeping each document separate and adding padding, **documents are packed together** in a more compact way.
+- A special **separator token (`Sep`)** is used between documents to mark boundaries.
+- **Benefit:** This approach minimizes the number of padding tokens, making full use of the available context size and improving training efficiency.
+
+##### **Example:**
+- **Inefficient Approach:**
+  ```
+  [Document 1] [Padding] [Padding]
+  [Document 2] [Padding] [Padding]
+  ```
+- **Optimized Packing:**
+  ```
+  [Document 1] [Sep] [Document 2] [Sep] [Document 3] [Padding]
+  ```
+
+- This means the model can process **more meaningful data per batch**, increasing training speed and efficiency.
+
+---
+
+### **Mixture of Experts (MoE) Explained**
+#### **1. Concept**
+- MoE is a technique that **divides a large model into multiple sub-models**, called **experts**.
+- Instead of using **one massive model** for every input, MoE **dynamically selects a few specialized experts** to handle each input.
+- This makes training and inference more **efficient and scalable**.
+
+#### **2. Router Mechanism**
+- A **router** decides which expert (or set of experts) should process the input.
+- Not all experts are used for every input; only a **subset of experts** is activated at any time.
+- **Benefit:** This reduces the computational cost since the model does not need to process everything through a single massive network.
+
+##### **Example:**
+- Imagine you have **four experts**, each trained on different aspects of language:
+  - **Expert 1:** Good at technical writing
+  - **Expert 2:** Good at creative writing
+  - **Expert 3:** Good at coding-related text
+  - **Expert 4:** Good at summarization
+
+- If the input is **"Write a summary of this article"**, the router might **activate Expert 4** instead of all experts, optimizing performance.
+
+#### **3. Layer-wise Expert Selection**
+- MoE doesn’t just choose an expert once. At **each layer** of the model, the router picks the best expert dynamically.
+- This means different layers might **activate different experts** depending on the complexity of the input.
+- **Benefit:** The model becomes **more flexible** and **scales better** with large datasets.
+
+##### **Comparison with Standard Models**
+| Traditional Model | MoE Model |
+|------------------|----------|
+| Single model processes all inputs | Different experts process different inputs |
+| High computational cost | Efficient, since only a subset of experts is used |
+| Slower training and inference | Faster due to selective computation |
+
+---
+
+### **Key Takeaways**
+- **Efficient Data Packing** minimizes padding and maximizes context usage.
+- **Mixture of Experts (MoE)** improves efficiency by using specialized experts dynamically, reducing computation.
+Here's a well-structured English explanation for your GitHub README:  
+
+---
+
+# **Mixture of Experts (MoE) in Large Language Models (LLMs)**  
+
+## **1. What is Mixture of Experts (MoE)?**  
+Mixture of Experts (MoE) is a technique that enhances the efficiency and scalability of **Large Language Models (LLMs)** by dynamically selecting a subset of specialized sub-models (experts) for processing each input. Unlike dense neural networks, which activate all parameters for every input, MoE models use only a small fraction of their total parameters at any given time.  
+
+## **2. How Does MoE Work?**  
+MoE models incorporate a **Router**, which decides which expert(s) should process an incoming input. This routing happens **at every layer**, meaning that each layer can dynamically choose different experts based on the input.  
+
+### **Routing Mechanism**  
+- The **Router** assigns weights to each expert, determining how much an input should be processed by each one.  
+- Typically, **only the top-k experts** (e.g., top-1 or top-2) are activated per input, while the rest remain idle.  
+- This selective activation allows the model to scale efficiently while reducing computation costs.  
+
+## **3. MoE vs. Dense Neural Networks**  
+| Feature | Dense Neural Network | Mixture of Experts (MoE) |  
+|---------|----------------------|--------------------------|  
+| **Parameter Utilization** | Uses all parameters for every input | Uses only selected experts per input |  
+| **Computational Efficiency** | High computational cost | More efficient due to selective activation |  
+| **Scalability** | Limited scalability | Easily scales with more experts |  
+
+## **4. Sparse Parameters: Loading vs. Inference**  
+One of the key advantages of MoE models is their **sparse parameter activation**, which affects both model loading and inference:  
+
+### **Loading Model (Training Phase)**
+- All experts are loaded into memory (high VRAM usage).  
+- The full model, including embeddings, attention layers, and the router, must be stored.  
+- Large MoE models, such as **Mixtral 8×7B**, require **46.7 billion parameters** to be loaded.  
+
+### **Inference Time (Execution)**
+- Only a subset of experts is activated per input, reducing VRAM requirements.  
+- This enables efficient inference while maintaining high performance.  
+- For example, instead of using **all 46.7B parameters**, an MoE model may only activate **11.2B parameters** per inference step.  
+
+## **5. Overfitting Issues in MoE**  
+While MoE models offer advantages in efficiency and scalability, they also pose some challenges:  
+- **Overfitting Risk:** Since individual experts specialize in certain inputs, they may become too tuned to specific data distributions, leading to overfitting.  
+- **Mitigation Strategies:** Techniques like **Dropout, Regularization, and Expert Balancing** are used to prevent experts from becoming too specialized.  
+
+## **6. Mixtral: A Case Study of MoE in LLMs**  
+**Mixtral 8×7B**, an MoE-based model, consists of 8 different **expert** modules, each with 7B parameters.  
+- It uses **top-2 routing**, meaning that only 2 out of the 8 experts are activated for each input.  
+- Unlike traditional Transformer models, **MoE layers do not interfere with the attention mechanism**, making them flexible and adaptable.  
+
+## **7. Pros & Cons of MoE Models**  
+### ✅ **Pros**  
+- **Low VRAM usage during inference**  
+- **High performance with efficient scaling**  
+- **Flexible architecture for diverse tasks**  
+
+### ❌ **Cons**  
+- **High VRAM requirements for model loading**  
+- **Higher risk of overfitting due to expert specialization**  
+- **More complex architecture compared to dense models**  
+
+## **8. Conclusion**  
+Mixture of Experts (MoE) provides an efficient and scalable approach for training massive LLMs, balancing computational efficiency with model performance. By dynamically routing inputs to specialized experts, MoE models achieve high efficiency while keeping VRAM usage low during inference. However, they come with added complexity and potential overfitting risks, requiring careful optimization.  
+
+
 # DAY 5
 # DAY 6
 # DAY 7
