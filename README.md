@@ -4,7 +4,9 @@
 This repository is dedicated to a **30-day journey to mastering LLM (Large Language Models), RAG (Retrieval-Augmented Generation), AI Agents, and Generative AI** through structured learning and hands-on projects.
 
 
-# Day 1 
+📅 Daily Lessons
+<details> <summary>📖 <strong>Day 1: Understanding Transformer-Based Language Models</strong></summary>
+
 ### **Understanding Transformer-Based Language Models**
 
 #### **1. Introduction to Transformers**  
@@ -91,8 +93,11 @@ Open-source models provide **flexibility, transparency, and customization**, mak
 Transformer models have revolutionized NLP by making **language understanding and generation more powerful than ever**. With their **self-attention mechanisms** and **scalability**, they are widely used in applications such as **machine translation, text summarization, search engines, and AI chatbots**.  
 
 As **new models continue to emerge**, the distinction between **representation models (BERT)** and **generative models (GPT)** remains crucial for selecting the right tool for each NLP task.
+</details>
 
-# DAY 2
+
+<details> <summary>📖 <strong>Day 2: Tokenization & Decoding Strategies</strong></summary>
+
 
 ### **Tokenization and Representation**  
 Tokenization is a critical step where input text is broken into smaller units, such as words, subwords, or characters. These tokens are mapped to numerical representations using an embedding matrix. The model's tokenizer maintains a predefined vocabulary, assigning each token a unique ID. The embeddings capture semantic relationships between words, which help the model understand context.
@@ -225,7 +230,10 @@ print(tokenizer.decode(output[0], skip_special_tokens=True))
 Coreference resolution helps models identify when different words refer to the same entity in a text. For example:
 "John went to the store. He bought milk."
 The model should recognize that "He" refers to "John."
+</details>
 
+
+<details> <summary>📖 <strong>Day 3: Relevance Scoring & Attention Mechanisms</strong></summary>
 
 # DAY 3
 
@@ -362,8 +370,9 @@ Here is a structured summary of the latest images focusing on key concepts relev
 
 This summary covers **key attention optimizations**, **multi-head attention**, **sparse computation techniques**, and **scalability solutions** that improve Transformer efficiency. It provides an **intuitive understanding of attention mechanisms** while also linking to **GPU memory optimizations and large-scale context handling**.
 
+</details>
 
-# DAY 4
+<details> <summary>📖 <strong>Day 4: Understanding Phi-3 Mini 4K Model & Mixture of Experts (MoE) & Efficient Scaling </strong></summary>
 
 ---
 ## **Understanding the Transformer Architecture using Phi-3 Mini 4K Instruct**
@@ -663,11 +672,11 @@ While MoE models offer advantages in efficiency and scalability, they also pose 
 
 ## **8. Conclusion**  
 Mixture of Experts (MoE) provides an efficient and scalable approach for training massive LLMs, balancing computational efficiency with model performance. By dynamically routing inputs to specialized experts, MoE models achieve high efficiency while keeping VRAM usage low during inference. However, they come with added complexity and potential overfitting risks, requiring careful optimization.  
+</details>
 
+<details> <summary>📖 <strong>Day 5: Training & Fine-Tuning LLMs</strong></summary>
+</details>
 
-# DAY 5
-# DAY 6
-# DAY 7
 
 
 
