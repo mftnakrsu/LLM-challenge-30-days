@@ -676,19 +676,5 @@ Mixture of Experts (MoE) provides an efficient and scalable approach for trainin
 </details>
 
 
-
-
-## **📌 Projects**
-- 📄 **LLM-Powered PDF Chatbot (RAG + AI Agent)**  
-- ✉️ **Automated Email Response Bot**  
-- 📈 **Financial News Analysis & Sentiment Extraction**  
-- 💻 **AI Agent for Code Review & Debugging**  
-
-## **🎯 Goals**
-✅ Fully prepare for the OpenAI interview  
-✅ Develop real-world AI projects  
-✅ Gain expertise in LLM, RAG, and AI Agents  
-✅ Build a strong portfolio on GitHub  
-
-🚀 **Are you ready to join this journey?** 😎  
-📌 **Follow along and star the repo!**
+**Are you ready to join this journey?** 
+ **Follow along and star the repo!**
