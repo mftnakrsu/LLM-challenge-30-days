@@ -1,4 +1,4 @@
-# 🚀 LLM Challenge: 30 Days
+# LLM Challenge: 30 Days
 
 ## **Objective**
 This repository is dedicated to a **30-day journey to mastering LLM (Large Language Models), RAG (Retrieval-Augmented Generation), AI Agents, and Generative AI** through structured learning and hands-on projects.
