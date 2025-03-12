@@ -845,5 +845,163 @@ Where:
 </details>
 
 
+<details> <summary>📖 <strong>Day 6: Retrieval-Augmented Generation (RAG)</strong></summary>
+
+# **Day 6: Retrieval-Augmented Generation (RAG)**  
+
+Retrieval-Augmented Generation (RAG) is a framework that enhances **Large Language Models (LLMs)** by integrating external knowledge retrieval into the text generation process. Instead of relying solely on pre-trained knowledge, **RAG queries an external document store (Vector Database or Index) and retrieves relevant chunks** before generating a response.  
+
+---
+
+## **1. Key Stages in RAG**
+RAG consists of **three main stages**:  
+1. **Ingestion:** Processing and indexing documents into a vector store.  
+2. **Retrieval:** Searching for relevant information from indexed documents.  
+3. **Synthesis:** Generating responses by combining retrieved information with an LLM.
+
+---
+
+## **2. RAG Workflow Overview**
+### **Step 1: Document Ingestion & Chunking**  
+Before a model can retrieve information, documents must be processed:
+- **Splitting into Chunks**: Long documents are divided into smaller segments.
+- **Embedding Creation**: Each chunk is converted into a numerical vector.
+- **Indexing in a Vector Store**: These embeddings are stored in a **Vector Database**.
+
+### **Step 2: Querying and Retrieval**  
+When a user submits a query:
+- The query is embedded and matched against stored document embeddings.
+- The **Top-K most relevant** document chunks are retrieved.
+
+### **Step 3: Response Generation (Synthesis)**
+- Retrieved chunks are **fed into the LLM**.
+- The LLM generates an answer based on both the **retrieved context and its own knowledge**.
+
+---
+
+## **3. RAG Pipeline: Code Implementation**
+### **Document Chunking and Embedding**
+First, we convert documents into chunks and store their vector representations.
+
+```python
+from llama_index import Document
+
+# Create a single document by joining multiple sources
+document = Document(text="\n\n".join([doc.text for doc in documents]))
+```
+
+### **Indexing Documents with VectorStore**
+We use **LlamaIndex** and OpenAI to create an indexed vector database.
+
+```python
+from llama_index import VectorStoreIndex
+from llama_index import ServiceContext
+from llama_index.llms import OpenAI
+
+# Define LLM model and embedding settings
+llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
+
+service_context = ServiceContext.from_defaults(
+    llm=llm, embed_model="local:BAAI/bge-small-en-v1.5"
+)
+
+# Create a vector store index from documents
+index = VectorStoreIndex.from_documents([document], service_context=service_context)
+```
+
+### **Querying the Vector Index**
+Once the index is built, we can retrieve relevant chunks:
+
+```python
+query_engine = index.as_query_engine()
+
+response = query_engine.query(
+    "What are steps to take when finding projects to build your experience?"
+)
+print(str(response))
+```
+
+This approach **retrieves** the most relevant document sections before passing them to the LLM for synthesis.
+
+---
+
+## **4. Vector Store Index vs. Vector Databases**
+### **What is a Vector Store Index?**
+A **Vector Store Index** (e.g., LlamaIndex) organizes and manages document embeddings efficiently.  
+- Stores document **chunks and embeddings**.  
+- Allows retrieval of the most relevant document parts.  
+- Often used with in-memory storage for local applications.
+
+### **What is a Vector Database?**
+A **Vector Database** (e.g., Pinecone, Weaviate, FAISS) scales **document retrieval** for larger applications.  
+- Designed for **high-performance** similarity search.
+- Optimized for **millions of documents**.
+- Enables **real-time retrieval with persistent storage**.
+
+| Feature | Vector Store Index (LlamaIndex) | Vector Database (FAISS, Pinecone) |
+|---------|--------------------------------|-----------------------------------|
+| **Scope** | Small-scale, in-memory indexing | Large-scale, distributed storage |
+| **Persistence** | Temporary (RAM) | Persistent storage |
+| **Performance** | Slower for large datasets | Optimized for high-speed queries |
+| **Use Case** | Prototyping, small apps | Production-level AI systems |
+
+---
+
+## **5. TruLens: Evaluation and Metrics**
+Evaluating RAG responses is critical for **ensuring high-quality outputs**. **TruLens** provides a framework for evaluating:
+- **Context Relevance:** Are retrieved documents aligned with the query?
+- **Groundedness:** How well does the LLM rely on retrieved data rather than hallucinations?
+
+### **Setting Up TruLens**
+```python
+from trulens_eval import Tru
+tru = Tru()
+tru.reset_database()
+```
+
+### **Recording Query Engine Results**
+TruLens can track the behavior of RAG pipelines and log **retrieval quality**.
+
+```python
+from utils import get_prebuilt_trulens_recorder
+
+tru_recorder = get_prebuilt_trulens_recorder(query_engine, app_id="Direct Query Engine")
+
+with tru_recorder as recording:
+    for question in eval_questions:
+        response = query_engine.query(question)
+```
+
+### **Launching Evaluation Dashboard**
+```python
+records, feedback = tru.get_records_and_feedback(app_ids=[])
+
+# Launch dashboard at http://localhost:8501/
+tru.run_dashboard()
+```
+This allows for **visualizing retrieval effectiveness** and tuning RAG pipelines for optimal performance.
+
+---
+
+## **6. RAG Challenges & Optimizations**
+### **Common Challenges**
+- **Hallucination**: The LLM might generate **incorrect information** if retrieval fails.
+- **Latency**: Searching large document stores can be slow.
+- **Index Updates**: Documents must be re-embedded and re-indexed when modified.
+
+### **Optimizations**
+✅ **Hybrid Search (BM25 + Vectors):** Combines traditional keyword search with embeddings.  
+✅ **Reranking Models:** Re-rank retrieved chunks for better relevance.  
+✅ **Chunk Overlapping:** Ensures **context continuity** across chunked documents.  
+✅ **Retrieval-Augmented Fine-Tuning:** Fine-tune models with custom retrieval strategies.
+
+---
+
+## **7. Conclusion**
+Retrieval-Augmented Generation (RAG) significantly improves **LLM accuracy and contextual relevance** by integrating **external document search** before text generation. **TruLens metrics**, **LlamaIndex for vector storage**, and **efficient indexing techniques** enhance retrieval effectiveness, making RAG a powerful technique for **question answering, chatbots, and enterprise AI systems**.
+
+</details>
+
+
 **Are you ready to join this journey?** 
  **Follow along and star the repo!**
