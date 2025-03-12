@@ -672,7 +672,176 @@ While MoE models offer advantages in efficiency and scalability, they also pose 
 Mixture of Experts (MoE) provides an efficient and scalable approach for training massive LLMs, balancing computational efficiency with model performance. By dynamically routing inputs to specialized experts, MoE models achieve high efficiency while keeping VRAM usage low during inference. However, they come with added complexity and potential overfitting risks, requiring careful optimization.  
 </details>
 
-<details> <summary>📖 <strong>Day 5: Training & Fine-Tuning LLMs</strong></summary>
+<details> <summary>📖 <strong>Day 5: Advanced Attention Mechanisms & Embeddings</strong></summary>
+Here’s your **Day 5** section for the GitHub README, covering all the topics you requested with **detailed explanations, formulas, and examples**.
+
+## **1. Self-Attention Mechanism Explained with Database Terminology**  
+Self-attention is the core mechanism that enables **Transformers** to understand relationships between tokens in a sequence. It determines how much focus each token should give to every other token in the input.
+
+### **Self-Attention in Database Terms**  
+Think of self-attention as querying a **relational database** where:
+- **Query (Q)** → Represents what a token wants to know.
+- **Key (K)** → Represents the attributes of all tokens.
+- **Value (V)** → Represents the actual stored information.
+
+When retrieving data from a database:
+1. **Query (Q)** is like an SQL search request.
+2. **Key (K)** fields define which columns are used for the lookup.
+3. **Value (V)** fields return the relevant data.
+
+The similarity between **Q and K** determines how much of the **V information** should be retrieved.
+
+### **Self-Attention Formula**
+The attention scores are computed using **scaled dot-product attention**:
+
+\[
+\text{Attention}(Q, K, V) = \text{softmax} \left( \frac{QK^T}{\sqrt{d_k}} \right) V
+\]
+
+- **\( QK^T \)** → Measures similarity between query and key.
+- **\( \sqrt{d_k} \)** → Normalization to prevent exploding gradients.
+- **softmax** → Converts scores into probability weights.
+
+---
+
+## **2. Masked Self-Attention vs. Regular Self-Attention**
+- **Self-Attention**: Each token can attend to **all tokens**, including future ones.
+- **Masked Self-Attention**: Used in **autoregressive models (GPT)** to **prevent tokens from seeing future tokens** during training.
+
+In masked attention, the upper triangular part of the attention matrix is filled with **-∞**, ensuring that future tokens do not influence the current token’s output.
+
+---
+
+## **3. Word Embeddings vs. Context-Aware Embeddings**
+### **What Are Word Embeddings?**
+Word embeddings represent words as **high-dimensional vectors** that capture semantic meaning. For example:
+- "great" → `[3.2, 1.1, -0.5, 0.7]`
+- "bad" → `[-2.3, -1.5, 0.8, -0.6]`
+
+Each value represents a dimension in a learned **semantic space**.
+
+However, **static word embeddings (Word2Vec, GloVe)** have a major limitation:  
+- **"Bank" (river bank) vs. "Bank" (financial institution)** → Both have the same vector representation.
+
+### **Context-Aware Embeddings**
+Context-aware embeddings (BERT, GPT) **generate different embeddings for the same word** based on surrounding context.
+
+Example:  
+- "I deposited money in the **bank**." → `[3.2, 0.5, -1.3]`
+- "The river **bank** was flooded." → `[1.2, 2.1, -0.7]`
+
+These embeddings are dynamically computed by the model, making them **far superior** for NLP tasks.
+
+---
+
+## **4. Sentence Embeddings vs. Word Embeddings**
+While word embeddings focus on **individual words**, **sentence embeddings** capture the overall meaning of a sentence.
+
+### **Why Sentence Embeddings Are More Meaningful?**
+- They provide a **higher-level abstraction** of meaning.
+- They enable **semantic search** and **sentence similarity** tasks.
+- Models like **SBERT (Sentence-BERT)** produce **fixed-length embeddings**, making them useful for retrieval-based applications.
+
+### **How Are Sentence Embeddings Computed?**
+1. **Average Word Embeddings**: Simple but loses syntactic structure.
+2. **Pooling Methods (Max, Mean, CLS Token)**: Extracts important features.
+3. **Transformer-based models (SBERT, T5, USE)**: Generate **context-rich, task-specific embeddings**.
+
+Example: Computing sentence embeddings using SBERT:
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
+sentences = ["I love AI.", "AI is transforming the world."]
+embeddings = model.encode(sentences)
+
+print(embeddings.shape)  # Output: (2, 384) - 2 sentences, each with a 384-dimension embedding
+```
+
+---
+
+## **5. Multi-Modal Embeddings**
+Multi-modal embeddings extend the concept beyond text and incorporate **vision, speech, and other modalities**.
+
+- **Text-Image Models (CLIP)**: Embeds text and images into a **shared semantic space**.
+- **Audio-Text Models (Whisper, HuBERT)**: Maps speech and text embeddings to a common space.
+- **Vision-Language Models (Flamingo, BLIP-2)**: Jointly learns representations of text and images.
+
+Example: Using **CLIP** to encode both an image and text:
+```python
+from transformers import CLIPProcessor, CLIPModel
+from PIL import Image
+
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+image = Image.open("cat.jpg")
+text = ["a photo of a cat", "a photo of a dog"]
+
+inputs = processor(text=text, images=image, return_tensors="pt")
+outputs = model(**inputs)
+
+print(outputs.logits_per_text)  # Higher score means better match
+```
+
+---
+
+## **6. Transformer Architectures: Encoder-Only, Decoder-Only, Encoder-Decoder**
+| Model Type | Description | Example Models | Use Cases |
+|------------|------------|---------------|-----------|
+| **Encoder-Only** | Processes input holistically, bidirectional attention. | BERT, RoBERTa | Text classification, NER, Sentiment Analysis |
+| **Decoder-Only** | Predicts next tokens sequentially, autoregressive. | GPT, LLaMA | Text generation, Chatbots |
+| **Encoder-Decoder** | Converts input to latent representation before generating output. | T5, BART, mT5 | Machine Translation, Summarization |
+
+### **Example: Encoder-Decoder Model for Prompt-Based Learning**
+Encoder-Decoder models (T5, BART) are often used in **Autoregressive Prompt Learning**.
+
+Example using **T5 for text summarization**:
+```python
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+
+tokenizer = T5Tokenizer.from_pretrained("t5-small")
+model = T5ForConditionalGeneration.from_pretrained("t5-small")
+
+input_text = "summarize: The meeting was held to discuss the recent advancements in AI..."
+input_ids = tokenizer(input_text, return_tensors="pt").input_ids
+
+summary_ids = model.generate(input_ids, max_length=50)
+print(tokenizer.decode(summary_ids[0], skip_special_tokens=True))
+```
+
+---
+
+## **7. Multi-Head Attention (MHA)**
+Multi-Head Attention (MHA) allows the model to **attend to different parts of a sequence simultaneously**.
+
+Each attention **head** has its own set of **Q, K, V matrices**, enabling the model to focus on different aspects of the input.
+
+### **Multi-Head Attention Formula**
+\[
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, ..., \text{head}_h) W^O
+\]
+
+Each attention head is computed as:
+\[
+\text{head}_i = \text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)
+\]
+
+Where:
+- **\( W_i^Q, W_i^K, W_i^V \)** → Separate weight matrices for each head.
+- **\( W^O \)** → Output projection matrix.
+
+---
+
+## **8. Summary: Why These Concepts Matter**
+- **Self-Attention** enables **contextual understanding** in Transformers.
+- **Masked Self-Attention** ensures **causal generation** in GPT models.
+- **Contextual Embeddings** make models better at understanding language nuances.
+- **Sentence Embeddings** are more useful for tasks like **semantic search**.
+- **Multi-Modal Embeddings** allow AI to learn across **text, image, and audio**.
+- **Encoder-Decoder Models** power **translation & summarization**.
+- **Multi-Head Attention** enhances the **expressive power** of Transformers.
+
 </details>
 
 
