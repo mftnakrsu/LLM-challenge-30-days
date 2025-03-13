@@ -673,7 +673,6 @@ Mixture of Experts (MoE) provides an efficient and scalable approach for trainin
 </details>
 
 <details> <summary>📖 <strong>Day 5: Advanced Attention Mechanisms & Embeddings</strong></summary>
-Here’s your **Day 5** section for the GitHub README, covering all the topics you requested with **detailed explanations, formulas, and examples**.
 
 ## **1. Self-Attention Mechanism Explained with Database Terminology**  
 Self-attention is the core mechanism that enables **Transformers** to understand relationships between tokens in a sequence. It determines how much focus each token should give to every other token in the input.
