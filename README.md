@@ -1001,6 +1001,104 @@ Retrieval-Augmented Generation (RAG) significantly improves **LLM accuracy and c
 
 </details>
 
+<details> <summary> <strong>📖 Day 7: Advance RAG Pipeline </strong></summary>
+
+### **1️⃣ Direct Queries**
+Direct queries involve retrieving relevant **chunks** of text directly from the vector database or index without considering surrounding context.  
+
+✅ **Pros:**  
+- Fast retrieval since only the most relevant chunk is fetched.  
+- Works well when documents are structured and information is self-contained.  
+
+❌ **Cons:**  
+- May miss crucial context if the information is spread across multiple sentences.  
+- Short queries might return incomplete results.  
+
+💡 **Use Case:** When the knowledge is atomic (e.g., **definitions, factual answers**).  
+
+---
+
+### **2️⃣ Sentence-Window Queries**
+Instead of retrieving only the most relevant chunk, **sentence-window retrieval** expands the context by fetching additional sentences before and after the retrieved chunk.  
+
+✅ **Pros:**  
+- **Improves context awareness**, ensuring that responses are more accurate.  
+- **Reduces hallucinations**, as the model has more surrounding information.  
+- Works well for **explanatory answers** where full context is needed.  
+
+❌ **Cons:**  
+- Slower compared to direct queries (more text to process).  
+- May include **irrelevant sentences**, which could introduce noise.  
+
+💡 **Use Case:** When retrieving **summaries, multi-sentence explanations, or references** (e.g., research papers, legal texts).  
+
+---
+
+### **3️⃣ Auto-Merging Retrieval**
+Auto-merging retrieval dynamically **combines multiple small chunks** into a larger **cohesive unit** before sending them to the LLM.  
+
+✅ **Pros:**  
+- Ensures that the response is based on a **wider** context.  
+- Helps reduce **truncation issues** when dealing with short context windows.  
+- Works well for **complex questions** requiring multiple sources of information.  
+
+❌ **Cons:**  
+- Increases computational overhead (merging takes processing time).  
+- If **too many chunks** are merged, some irrelevant information might be included.  
+
+💡 **Use Case:** When working with **multi-paragraph** answers, FAQs, or **document summarization**.  
+
+
+### **4️⃣ Evaluating RAG Responses: Key Metrics**  
+To assess the quality of a RAG-based system, we measure the response using three primary **evaluation metrics**:  
+
+### **🔹 Answer Relevance**  
+✅ Measures **how well the generated response answers the query**.  
+✅ Checks if the **semantic meaning aligns with the intent** of the question.  
+
+🔹 **Formula (Simplified):**  
+```
+Answer Relevance = Similarity(Query, Response)
+```
+🔹 **Example:**  
+**Query:** *"What is the capital of France?"*  
+**Response:** *"Paris is the capital of France."* ✅ **(High relevance)**  
+**Response:** *"France is in Europe."* ❌ **(Low relevance - doesn't answer directly)**  
+
+---
+
+### **🔹 Context Relevance**  
+✅ Measures whether the **retrieved document chunk is relevant** to the query.  
+✅ If the retrieved context is off-topic, the model is forced to **hallucinate**.  
+
+🔹 **Formula (Simplified):**  
+```
+Context Relevance = Similarity(Query, Retrieved Chunk)
+```
+🔹 **Example:**  
+**Query:** *"Explain quantum entanglement."*  
+**Retrieved Chunk:** *"Quantum entanglement describes a phenomenon in which..."* ✅ **(High relevance)**  
+**Retrieved Chunk:** *"Newton's laws describe classical motion."* ❌ **(Low relevance - wrong context)**  
+
+---
+
+### **🔹 Groundedness**  
+✅ Measures whether the **final response is based on the retrieved context** or if the model **hallucinates** information.  
+✅ If the LLM generates content that **does not appear in the retrieved document**, **groundedness is low**.  
+
+🔹 **Formula (Simplified):**  
+```
+Groundedness = Overlap(Response, Retrieved Context)
+```
+🔹 **Example:**  
+**Retrieved Chunk:** *"The Eiffel Tower is in Paris."*  
+**LLM Response:** *"The Eiffel Tower is in Paris, built in 1889."* ✅ **(High groundedness, as facts align)**  
+**LLM Response:** *"The Eiffel Tower is in Berlin, built in 1900."* ❌ **(Low groundedness, incorrect facts)**  
+
+
+</details>
+
+
 
 **Are you ready to join this journey?** 
  **Follow along and star the repo!**
