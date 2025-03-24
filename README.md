@@ -1098,6 +1098,143 @@ Groundedness = Overlap(Response, Retrieved Context)
 
 </details>
 
+<details> <summary>📖 <strong>Day 8: Sentence Window Retrieval & Auto-Merging Retrieval </strong></summary>
+
+LLM tabanlı uygulamalarda bilgi alma (retrieval) sistemleri, modelin doğru, bağlamı kuvvetli ve uydurmadan uzak cevaplar verebilmesi için kritik öneme sahiptir. Bu dökümanda, LlamaIndex kütüphanesi kullanılarak uygulanan iki farklı retrieval yaklaşımını karşılaştıracağız:
+
+- Sentence Window Retrieval
+- Auto-Merging Retrieval
+
+## Sentence Window Retrieval
+
+### Amaç:
+Belgeyi cümle cümle böler ve her cümleyi komşu cümlelerle birlikte bir pencere olarak temsil eder. Örneğin `window_size=3` ise her node 3 cümleden oluşur.
+
+### Kurulum:
+
+```python
+from llama_index.node_parser import SentenceWindowNodeParser
+
+node_parser = SentenceWindowNodeParser.from_defaults(
+    window_size=3,
+    window_metadata_key="window",
+    original_text_metadata_key="original_text",
+)
+```
+
+### Index Oluşturma:
+
+```python
+from llama_index import VectorStoreIndex, ServiceContext
+
+sentence_context = ServiceContext.from_defaults(
+    llm=llm,
+    embed_model="local:BAAI/bge-small-en-v1.5",
+    node_parser=node_parser,
+)
+
+sentence_index = VectorStoreIndex.from_documents(
+    [document], service_context=sentence_context
+)
+```
+
+### Query Engine:
+
+```python
+from llama_index.indices.postprocessor import (
+    MetadataReplacementPostProcessor,
+    SentenceTransformerRerank
+)
+
+postproc = MetadataReplacementPostProcessor(target_metadata_key="window")
+rerank = SentenceTransformerRerank(top_n=2, model="BAAI/bge-reranker-base")
+
+query_engine = sentence_index.as_query_engine(
+    similarity_top_k=6,
+    node_postprocessors=[postproc, rerank]
+)
+```
+
+### Notlar:
+- `window_size`: Bağlam için kaç cümlelik pencere kullanılacağını belirler.
+- `MetadataReplacementPostProcessor`: Asıl cümle yerine pencereyi döndürmek için kullanılır.
+- `Reranker`: Semantic benzerliğe göre en iyi n sonucu seçer.
+
+## Auto-Merging Retrieval
+
+### Amaç:
+Belgeleri hiyerarşik parçalara ayırar ve sorguya en yakın node'lardan başlayarak bağlı oldukları üst paragrafları otomatik birleştirir. Bu sayede daha anlamlı ve bağlamı kuvvetli cevaplar elde edilir.
+
+### Hierarchical Node Parsing:
+
+```python
+from llama_index.node_parser import HierarchicalNodeParser, get_leaf_nodes
+
+node_parser = HierarchicalNodeParser.from_defaults(
+    chunk_sizes=[2048, 512, 128]  # 3 seviyeli parçalama
+)
+nodes = node_parser.get_nodes_from_documents([document])
+leaf_nodes = get_leaf_nodes(nodes)
+```
+
+### Index Oluşturma:
+
+```python
+from llama_index import StorageContext, VectorStoreIndex
+
+storage_context = StorageContext.from_defaults()
+storage_context.docstore.add_documents(nodes)
+
+automerging_index = VectorStoreIndex(
+    leaf_nodes, storage_context=storage_context, service_context=auto_merging_context
+)
+```
+
+### Retriever + Query Engine:
+
+```python
+from llama_index.retrievers import AutoMergingRetriever
+from llama_index.indices.postprocessor import SentenceTransformerRerank
+from llama_index.query_engine import RetrieverQueryEngine
+
+base_retriever = automerging_index.as_retriever(similarity_top_k=12)
+retriever = AutoMergingRetriever(
+    base_retriever,
+    automerging_index.storage_context,
+    verbose=True
+)
+rerank = SentenceTransformerRerank(top_n=6, model="BAAI/bge-reranker-base")
+
+auto_merging_engine = RetrieverQueryEngine.from_args(
+    retriever, node_postprocessors=[rerank]
+)
+```
+
+### Notlar:
+- `chunk_sizes`: Belgeyi büyy\u00fkten küçüğe parçalayarak bağlam yapısı oluşturur.
+- `AutoMergingRetriever`: Leaf node'ların bağlı olduğu üst metinleri otomatik birleştirir.
+- `Reranker`: Sıralamayı optimize eder.
+
+## Farklar:
+
+| Özellik | SentenceWindow | AutoMerging |
+|----------|----------------|-------------|
+| Bağlam | Komşu cümle pencere | Hiyerarşik metin yapısı |
+| Esneklik | Sabit pencere | Dinamik birleştirme |
+| Detay Derinliği | Orta | Yüksek |
+| Uygulama Kolaylığı | Basit | Orta-zor |
+| Performans | Daha hızlı | Daha bağlamı kuvvetli ama ağır |
+
+## TruLens Metrikleri (Değerlendirme için)
+
+| Metrik | Anlamı | Açıklama |
+|--------|---------|------------|
+| Answer Relevance | Soruyla ne kadar uyumlu | 1.0'a yaklaşması istenir |
+| Context Relevance | Belgedeki doğru yerden mi | 1.0 olmalı |
+| Groundedness | Gerçekten belgeye mi dayanıyor | 0.9 ve üstü iyi, < 0.7 hallucination riski |
+
+</details>
+
 
 
 **Are you ready to join this journey?** 
