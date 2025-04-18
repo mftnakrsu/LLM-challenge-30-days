@@ -1235,6 +1235,186 @@ auto_merging_engine = RetrieverQueryEngine.from_args(
 
 </details>
 
+<details> <summary>📖 <strong>Day 9: Router Query Engines & Tool Routing in RAG Systems</strong></summary>
+
+### **1. Router Query Engine: Multi-Tool Dispatching**
+
+Router Query Engine is a powerful mechanism in **LlamaIndex** that enables dynamic routing of user queries to the most relevant sub-system (e.g., summarization vs. retrieval).  
+
+Instead of relying on a single index or query engine, it uses a **selector** (e.g., `LLMSingleSelector`) to determine the best tool to answer a given query.
+
+#### ✅ **Example:**
+- If the question is **“Summarize the document”**, the selector routes it to the **Summary Index**.
+- If it’s **“What is mentioned about section X?”**, it uses the **Vector Index** for retrieval.
+
+---
+
+### **2. Summary Index vs Vector Index**
+- `SummaryIndex`: Provides high-level, hierarchical document summarization.
+- `VectorStoreIndex`: Retrieves fine-grained chunks using semantic similarity.
+
+Each has its own query engine and is registered as a **QueryEngineTool**, with metadata describing when it should be used.
+
+---
+
+### **3. Selector Mechanisms**
+- **LLM Selector**: Uses a language model to generate JSON for routing decision.
+- **Pydantic Selector**: Uses OpenAI Function Calling to enforce schema and ensure structured outputs.
+
+📌 These enable **multi-agent workflows**, helping LLMs intelligently choose between summarization, retrieval, or reasoning.
+
+---
+
+### **4. Combined Query Engine Flow**
+
+The full pipeline:
+```
+User Query 
+    ↓
+RouterQueryEngine
+    ↓
+LLMSingleSelector or PydanticSelector
+    ↓
+Best-suited QueryEngineTool (e.g., summary or retrieval)
+    ↓
+Final Response
+```
+
+This ensures that **different tasks are handled by specialized subsystems**, improving accuracy and relevance.
+
+---
+
+### **5. Takeaways**
+- Router engines enable **task-specific routing**, a key concept in advanced RAG pipelines.
+- This design supports **scalability, modularity, and interpretability** in LLM-powered systems.
+- Tool selection logic can be interpreted or audited, making the system **explainable** and **trustworthy**.
+
+Elbette! Aşağıya, **Day 9**’un devamı niteliğinde olacak şekilde notlara eklemeler yapıyorum. Bu kısımda pratik kurulum, kod örneği ve kullanım detayları yer alıyor — böylece **RouterQueryEngine**’in nasıl çalıştığını uygulamalı olarak anlayabilirsin:
+
+---
+
+### **6. How to Implement a Router Query Engine**
+
+You can combine multiple tools or query engines under a single **RouterQueryEngine**, which automatically delegates user queries to the best-suited tool.
+
+#### ✅ **Step-by-step Setup Example:**
+
+```python
+from llama_index.core import VectorStoreIndex, SummaryIndex
+from llama_index.core.tools import QueryEngineTool
+from llama_index.selectors.llm_selectors import LLMSingleSelector
+from llama_index.query_engine.router_query_engine import RouterQueryEngine
+from llama_index.llms import OpenAI
+```
+
+---
+
+#### 📘 **1. Build the Individual Engines**
+
+```python
+vector_index = VectorStoreIndex(nodes)
+vector_engine = vector_index.as_query_engine(similarity_top_k=2)
+
+summary_index = SummaryIndex(nodes)
+summary_engine = summary_index.as_query_engine(response_mode="tree_summarize")
+```
+
+---
+
+#### 🧰 **2. Wrap Engines as QueryEngineTools**
+
+```python
+vector_tool = QueryEngineTool.from_defaults(
+    name="vector_tool",
+    description="Useful for answering specific questions using retrieval",
+    query_engine=vector_engine,
+)
+
+summary_tool = QueryEngineTool.from_defaults(
+    name="summary_tool",
+    description="Useful for summarizing the document",
+    query_engine=summary_engine,
+)
+```
+
+---
+
+#### 🧠 **3. Initialize the Selector**
+
+```python
+llm = OpenAI(model="gpt-3.5-turbo", temperature=0)
+selector = LLMSingleSelector.from_defaults(llm=llm)
+```
+
+---
+
+#### 🔁 **4. Combine into a RouterQueryEngine**
+
+```python
+router_query_engine = RouterQueryEngine.from_defaults(
+    selector=selector,
+    query_engine_tools=[vector_tool, summary_tool],
+    llm=llm
+)
+```
+
+---
+
+#### 💬 **5. Run a Query through the Router**
+
+```python
+response = router_query_engine.query("Summarize the document briefly.")
+print(str(response))
+```
+
+Or try:
+
+```python
+response = router_query_engine.query("What does MetaGPT say about section 5?")
+```
+
+---
+
+### ⚙️ **How It Works Under the Hood**
+
+1. The `LLMSingleSelector` analyzes the user query.
+2. Based on tool descriptions, it selects the most relevant tool.
+3. The query is passed only to that tool’s engine.
+4. Final response is returned, just as if the user directly called that engine.
+
+---
+
+### 🔍 **Debugging Tip**
+
+You can set `verbose=True` in `RouterQueryEngine.from_defaults(...)` to **see which tool is chosen** and why.
+
+```python
+router_query_engine = RouterQueryEngine.from_defaults(
+    selector=selector,
+    query_engine_tools=[vector_tool, summary_tool],
+    llm=llm,
+    verbose=True
+)
+```
+
+---
+
+### 🧭 **Real-World Applications**
+
+- Routing questions to **RAG**, **summarization**, **database**, or **calculation** tools
+- Can be expanded with **LLM Agents**, **FunctionTools**, or **external APIs**
+- Ideal for **multi-modal**, **multi-index**, or **multi-task** LLM pipelines
+
+---
+
+### ✅ **Key Concepts Recap**
+| Component | Role |
+|----------|------|
+| `QueryEngineTool` | Wraps an individual engine and defines what it does |
+| `LLMSingleSelector` | Chooses the best tool based on the user query |
+| `RouterQueryEngine` | Central system that delegates user queries dynamically |
+
+---
 
 
 **Are you ready to join this journey?** 
