@@ -1297,7 +1297,7 @@ Elbette! Aşağıya, **Day 9**’un devamı niteliğinde olacak şekilde notlara
 
 You can combine multiple tools or query engines under a single **RouterQueryEngine**, which automatically delegates user queries to the best-suited tool.
 
-#### ✅ **Step-by-step Setup Example:**
+#### **Step-by-step Setup Example:**
 
 ```python
 from llama_index.core import VectorStoreIndex, SummaryIndex
@@ -1309,7 +1309,7 @@ from llama_index.llms import OpenAI
 
 ---
 
-#### 📘 **1. Build the Individual Engines**
+#### **1. Build the Individual Engines**
 
 ```python
 vector_index = VectorStoreIndex(nodes)
@@ -1321,7 +1321,7 @@ summary_engine = summary_index.as_query_engine(response_mode="tree_summarize")
 
 ---
 
-#### 🧰 **2. Wrap Engines as QueryEngineTools**
+#### **2. Wrap Engines as QueryEngineTools**
 
 ```python
 vector_tool = QueryEngineTool.from_defaults(
@@ -1339,7 +1339,7 @@ summary_tool = QueryEngineTool.from_defaults(
 
 ---
 
-#### 🧠 **3. Initialize the Selector**
+#### **3. Initialize the Selector**
 
 ```python
 llm = OpenAI(model="gpt-3.5-turbo", temperature=0)
@@ -1348,7 +1348,7 @@ selector = LLMSingleSelector.from_defaults(llm=llm)
 
 ---
 
-#### 🔁 **4. Combine into a RouterQueryEngine**
+#### **4. Combine into a RouterQueryEngine**
 
 ```python
 router_query_engine = RouterQueryEngine.from_defaults(
@@ -1360,7 +1360,7 @@ router_query_engine = RouterQueryEngine.from_defaults(
 
 ---
 
-#### 💬 **5. Run a Query through the Router**
+#### **5. Run a Query through the Router**
 
 ```python
 response = router_query_engine.query("Summarize the document briefly.")
@@ -1375,7 +1375,7 @@ response = router_query_engine.query("What does MetaGPT say about section 5?")
 
 ---
 
-### ⚙️ **How It Works Under the Hood**
+### **How It Works Under the Hood**
 
 1. The `LLMSingleSelector` analyzes the user query.
 2. Based on tool descriptions, it selects the most relevant tool.
@@ -1384,7 +1384,7 @@ response = router_query_engine.query("What does MetaGPT say about section 5?")
 
 ---
 
-### 🔍 **Debugging Tip**
+### **Debugging Tip**
 
 You can set `verbose=True` in `RouterQueryEngine.from_defaults(...)` to **see which tool is chosen** and why.
 
@@ -1399,7 +1399,7 @@ router_query_engine = RouterQueryEngine.from_defaults(
 
 ---
 
-### 🧭 **Real-World Applications**
+### **Real-World Applications**
 
 - Routing questions to **RAG**, **summarization**, **database**, or **calculation** tools
 - Can be expanded with **LLM Agents**, **FunctionTools**, or **external APIs**
@@ -1407,7 +1407,7 @@ router_query_engine = RouterQueryEngine.from_defaults(
 
 ---
 
-### ✅ **Key Concepts Recap**
+### **Key Concepts Recap**
 | Component | Role |
 |----------|------|
 | `QueryEngineTool` | Wraps an individual engine and defines what it does |
