@@ -1416,6 +1416,128 @@ router_query_engine = RouterQueryEngine.from_defaults(
 
 ---
 
+</details>
+<details> <summary>📖 <strong>Day 10: Introduction to AI Agents, Tools, and Retrieval Mechanisms</strong></summary>
+
+# **Day 10: Introduction to AI Agents, Tools, and Retrieval Mechanisms**
+
+---
+
+## **1. What is an AI Agent?**
+
+An **AI Agent** is a system designed to:
+- Receive a **query** (input from a user).
+- **Think/Plan** what needs to be done.
+- **Select the correct tool(s)** to perform actions.
+- **Return the final response** after reasoning or execution.
+
+In modern LLM systems, agents are often paired with external tools to extend their capabilities beyond just language modeling.
+
+---
+
+## **2. Components of an AI Agent**
+
+| Component | Description |
+|:---|:---|
+| **AgentRunner** | Manages the lifecycle of the agent (receives query, returns response). |
+| **AgentWorker** | Executes the core logic: retrieves the right tool, uses it, and builds the final answer. |
+| **Retriever** | A special system that dynamically finds the most appropriate tool or document based on the input query. |
+| **Tool** | A callable function that performs a specific task (like summarizing a document or retrieving information). |
+
+---
+
+## **3. What is a Tool?**
+
+A **Tool** is any callable function that can help the agent perform tasks that the LLM itself cannot do alone.
+
+✅ Tools extend the capabilities of an agent:  
+- Retrieval tools (semantic search)  
+- Summarization tools  
+- Database queries  
+- External API calls
+
+**Each tool** includes:
+- A **function** (code that does something),
+- A **docstring/description** (so the agent knows when to use it).
+
+---
+
+## **4. Role of Docstrings in Tools**
+
+- The **docstring** or **description** of a tool tells the agent **what the tool is for**.
+- The agent **reads** the docstrings when deciding **which tool to use**.
+
+✅ Clear, precise docstrings lead to better tool selection.  
+✅ Docstrings act like a **resume** for the tool, describing its skillset!
+
+---
+
+## **5. Tool Selection Methods**
+
+| Method | Description |
+|:---|:---|
+| **Simple String Matching** | Agent reads tool descriptions as plain text and matches based on keywords. |
+| **Semantic Search (Embedding-based)** | Tool descriptions are **embedded** into vector space; the query is embedded too; most semantically similar tool is selected. (Advanced and more robust.) |
+
+---
+
+## **6. Retriever Explained**
+
+A **Retriever** is a component that:
+- Takes in the user query,
+- Embeds it into vector space,
+- Searches among all available tool descriptions,
+- Returns the **top-k most relevant** tools based on semantic similarity.
+
+✅ Retriever allows the agent to **dynamically** and **intelligently** select tools at runtime.
+
+---
+
+## **7. End-to-End Flow: How an Agent Works with a Retriever**
+
+```mermaid
+flowchart TD
+    User("User sends a query") --> Runner("AgentRunner receives query")
+    Runner --> Worker("AgentWorker processes query")
+    Worker --> Retriever("Tool Retriever searches for best matching tool")
+    Retriever --> Tool("Selected Tool is executed")
+    Tool --> Worker2("AgentWorker composes final response")
+    Worker2 --> Runner2("AgentRunner sends response to user")
+    Runner2 --> User2("User receives the answer")
+```
+
+---
+
+## **8. Key Advantages of This Architecture**
+
+✅ **Flexibility** — New tools can be added without retraining the agent.  
+✅ **Scalability** — As the number of tools grows, semantic search ensures correct selection.  
+✅ **Control** — Developers can inspect, modify, and monitor which tools are selected and how responses are generated.
+
+---
+
+## **9. Important Concepts Recap**
+
+| Concept | Summary |
+|:---|:---|
+| **Tool** | A function that extends the LLM’s abilities. |
+| **Docstring** | Description that helps the agent decide which tool to pick. |
+| **Retriever** | Component that dynamically finds the most suitable tool via semantic search. |
+| **AgentRunner/AgentWorker** | Together they handle the full agent lifecycle. |
+| **Semantic Search** | Advanced matching based on meaning, not just keywords. |
+
+---
+
+# 🎯 **Conclusion**
+
+Today, we built a strong foundation in understanding **AI agents, tools, retrievers**, and **dynamic tool selection**.  
+Mastering these concepts is critical for developing scalable, modular, and intelligent LLM-based systems! 🚀
+
+---
+
+</details>
+
+
 
 **Are you ready to join this journey?** 
  **Follow along and star the repo!**
